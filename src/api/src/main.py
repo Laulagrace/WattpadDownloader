@@ -2,7 +2,14 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
 from ebooklib import epub
-from create_book import retrieve_story, set_cover, set_metadata, add_chapters, slugify
+from create_book import (
+    retrieve_story,
+    set_cover,
+    set_metadata,
+    add_chapters,
+    slugify,
+    wp_get_cookies,
+)
 import tempfile
 from io import BytesIO
 from fastapi.staticfiles import StaticFiles
@@ -18,7 +25,8 @@ def home():
 
 @app.get("/download/{story_id}")
 async def download_book(story_id: int):
-    data = await retrieve_story(story_id)
+    cookies = await wp_get_cookies(username="", password="")
+    data = await retrieve_story(story_id, cookies=cookies)
     book = epub.EpubBook()
 
     # Metadata and Cover are updated
@@ -27,7 +35,7 @@ async def download_book(story_id: int):
     # print("Metadata Downloaded")
 
     # Chapters are downloaded
-    async for title in add_chapters(book, data):
+    async for title in add_chapters(book, data, cookies=cookies):
         # print(f"Part ({title}) downloaded")
         ...
 
